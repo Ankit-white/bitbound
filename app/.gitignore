@@ -1,0 +1,37 @@
+# Virtual Environment
+
+venv/
+.env
+
+# Python
+
+**pycache**/
+*.pyc
+*.pyo
+*.pyd
+
+# VS Code
+
+.vscode/
+
+# PyCharm
+
+.idea/
+
+# Logs
+
+*.log
+
+# Alembic Cache
+
+alembic/**pycache**/
+alembic/versions/**pycache**/
+
+# Pytest
+
+.pytest_cache/
+
+# OS Files
+
+.DS_Store
+Thumbs.db
