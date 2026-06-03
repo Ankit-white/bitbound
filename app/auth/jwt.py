@@ -40,8 +40,10 @@ class JWTManager:
         try:
             payload = jwt.decode(token, cls._secret_key, algorithms=[cls._algorithm])
             return payload
-        except JWTError:
-            return None
+        
+        except JWTError as e:
+                print("JWT ERROR:", e)
+                return None
 
     @classmethod
     def get_current_user_payload(cls, token: str) -> dict | None:

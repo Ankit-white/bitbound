@@ -2,9 +2,12 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import Boolean, Index, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import BaseModel
+
+if TYPE_CHECKING:
+    from app.models.agents import Agent
 
 
 class User(BaseModel):
@@ -33,8 +36,12 @@ class User(BaseModel):
         default=True
     )
 
-    # Remove the agents relationship for now
-    # agents: Mapped[list["Agent"]] = relationship(...)
+    agents: Mapped[list["Agent"]] = relationship(
+        "Agent",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
 
     __table_args__ = (
         Index("idx_users_email_active", "email", "is_active"),
