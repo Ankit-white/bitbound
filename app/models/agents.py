@@ -9,6 +9,8 @@ from app.models.base import BaseModel
 
 if TYPE_CHECKING:
     from app.models.user import User
+    from app.models.wallet import Wallet
+    from app.models.usage import Usage
 
 
 class Agent(BaseModel):
@@ -44,6 +46,19 @@ class Agent(BaseModel):
     )
 
     user: Mapped["User"] = relationship("User", back_populates="agents")
+    
+    wallet: Mapped["Wallet"] = relationship(
+        "Wallet",
+        back_populates="agent",
+        uselist=False,
+        cascade="all, delete-orphan"
+    )
+
+    usages: Mapped[list["Usage"]] = relationship(
+        "Usage",
+        back_populates="agent",
+        cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         Index("idx_agents_user", "user_id"),

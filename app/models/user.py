@@ -8,6 +8,7 @@ from app.models.base import BaseModel
 
 if TYPE_CHECKING:
     from app.models.agents import Agent
+    from app.models.payment import Payment
 
 
 class User(BaseModel):
@@ -41,6 +42,12 @@ class User(BaseModel):
         back_populates="user",
         cascade="all, delete-orphan",
         lazy="selectin"
+    )
+
+    payments: Mapped[list["Payment"]] = relationship(
+        "Payment",
+        back_populates="user",
+        cascade="all, delete-orphan"
     )
 
     __table_args__ = (
