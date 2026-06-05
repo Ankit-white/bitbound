@@ -11,6 +11,8 @@ if TYPE_CHECKING:
     from app.models.user import User
     from app.models.wallet import Wallet
     from app.models.usage import Usage
+    from app.models.workflow import Workflow
+    from app.models.workflow_execution import WorkflowExecution
 
 
 class Agent(BaseModel):
@@ -58,6 +60,20 @@ class Agent(BaseModel):
         "Usage",
         back_populates="agent",
         cascade="all, delete-orphan"
+    )
+
+    workflows: Mapped[list["Workflow"]] = relationship(
+        "Workflow",
+        back_populates="agent",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+
+    workflow_executions: Mapped[list["WorkflowExecution"]] = relationship(
+        "WorkflowExecution",
+        back_populates="agent",
+        cascade="all, delete-orphan",
+        lazy="selectin"
     )
 
     __table_args__ = (
