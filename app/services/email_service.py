@@ -1,4 +1,6 @@
-from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
+import asyncio
+from email.message import EmailMessage
+import smtplib
 from typing import Optional
 
 
@@ -30,17 +32,12 @@ class EmailService:
         use_tls: bool = True
     ):
         self.mail_from = mail_from
-        self.conf = ConnectionConfig(
-            MAIL_USERNAME=mail_username,
-            MAIL_PASSWORD=mail_password,
-            MAIL_FROM=mail_from,
-            MAIL_SERVER=mail_server,
-            MAIL_PORT=mail_port,
-            MAIL_SSL_TLS=use_ssl,
-            MAIL_STARTTLS=use_tls,
-            USE_CREDENTIALS=True,
-            VALIDATE_CERTS=True,
-        )
+        self.mail_username = mail_username
+        self.mail_password = mail_password
+        self.mail_server = mail_server
+        self.mail_port = mail_port
+        self.use_ssl = use_ssl
+        self.use_tls = use_tls
 
     async def send_email(
         self,
@@ -48,15 +45,35 @@ class EmailService:
         subject: str,
         html_body: str
     ) -> None:
-        message = MessageSchema(
-            subject=subject,
-            recipients=[recipient],
-            body=html_body,
-            subtype=MessageType.html
+        await asyncio.to_thread(
+            self._send_email_sync,
+            recipient,
+            subject,
+            html_body
         )
-        
-        fm = FastMail(self.conf)
-        await fm.send_message(message)
+
+    def _send_email_sync(
+        self,
+        recipient: str,
+        subject: str,
+        html_body: str
+    ) -> None:
+        message = EmailMessage()
+        message["From"] = self.mail_from
+        message["To"] = recipient
+        message["Subject"] = subject
+        message.set_content(
+            "This email requires an HTML-capable email client."
+        )
+        message.add_alternative(html_body, subtype="html")
+
+        smtp_class = smtplib.SMTP_SSL if self.use_ssl else smtplib.SMTP
+        with smtp_class(self.mail_server, self.mail_port, timeout=30) as smtp:
+            if self.use_tls and not self.use_ssl:
+                smtp.starttls()
+
+            smtp.login(self.mail_username, self.mail_password)
+            smtp.send_message(message)
 
     async def send_verification_otp(
         self,

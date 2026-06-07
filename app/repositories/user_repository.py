@@ -64,3 +64,12 @@ class UserRepository:
             self.db.refresh(user)
         
         return user
+
+    def delete_user(self, user_id: UUID) -> bool:
+        deleted_count = (
+            self.db.query(User)
+            .filter(User.id == user_id)
+            .delete(synchronize_session=False)
+        )
+        self.db.commit()
+        return deleted_count > 0

@@ -185,6 +185,9 @@ class AuthService:
     def get_user_by_email(self, email: str) -> User | None:
         return self.user_repository.get_user_by_email(email)
 
+    def delete_user(self, user_id: UUID) -> bool:
+        return self.user_repository.delete_user(user_id)
+
     def reset_password(
         self,
         user_id: UUID,

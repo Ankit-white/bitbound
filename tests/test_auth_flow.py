@@ -8,6 +8,7 @@ from app.core.config import settings
 from app.database import SessionLocal
 from app.main import app
 from app.models.otp import OTP, OTPType
+from app.models.user import User
 
 
 class DummyEmailService:
@@ -103,8 +104,13 @@ def test_register_returns_503_when_verification_email_cannot_be_sent():
 
         assert response.status_code == 503
         detail = response.json()["detail"]
-        assert "user_id" in detail
         assert "could not be sent" in detail["message"]
+
+        db = SessionLocal()
+        try:
+            assert db.query(User).filter(User.email == email).first() is None
+        finally:
+            db.close()
     finally:
         settings.AUTH_DEBUG_OTP_IN_RESPONSE = previous_debug_setting
         app.dependency_overrides.clear()
