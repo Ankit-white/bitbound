@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from app.models.usage import Usage
     from app.models.workflow import Workflow
     from app.models.workflow_execution import WorkflowExecution
+    from app.models.api_key import APIKey
 
 
 class Agent(BaseModel):
@@ -71,6 +72,13 @@ class Agent(BaseModel):
 
     workflow_executions: Mapped[list["WorkflowExecution"]] = relationship(
         "WorkflowExecution",
+        back_populates="agent",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+
+    api_keys: Mapped[list["ApiKey"]] = relationship(
+        "ApiKey",
         back_populates="agent",
         cascade="all, delete-orphan",
         lazy="selectin"

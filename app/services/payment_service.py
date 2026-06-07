@@ -11,6 +11,8 @@ from app.services.wallet_service import WalletService
 
 class PaymentNotFoundError(Exception):
     pass
+class InvalidPaymentError(Exception):
+    pass
 
 
 class InvalidPaymentStatusError(Exception):
@@ -19,7 +21,8 @@ class InvalidPaymentStatusError(Exception):
 
 class PaymentCreditingError(Exception):
     pass
-
+class PaymentVerificationError(Exception):
+    pass
 
 class PackageNotFoundError(Exception):
     pass

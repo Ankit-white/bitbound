@@ -1,13 +1,16 @@
 from uuid import UUID
-
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
-from app.auth.jwt import JWTManager
 from app.database import get_db
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
+from app.repositories.otp_repository import OTPRepository
+from app.repositories.refresh_token_repository import RefreshTokenRepository
+from app.services.auth_service import AuthService
+from app.services.email_service import EmailService
+from app.services.jwt_service import JWTService
 
 security = HTTPBearer()
 
@@ -18,7 +21,15 @@ def get_current_user(
 ) -> User:
     token = credentials.credentials
 
-    payload = JWTManager.get_current_user_payload(token)
+    try:
+        from app.auth.jwt import JWTManager
+        payload = JWTManager.get_current_user_payload(token)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     
     if not payload or not payload.get("user_id"):
         raise HTTPException(
@@ -37,7 +48,7 @@ def get_current_user(
         )
     
     user_repo = UserRepository(db)
-    user = user_repo.get_user_by_id(user_id)
+    user = user_repo.get_by_id(user_id)
     
     if not user:
         raise HTTPException(
@@ -63,4 +74,35 @@ def get_current_active_user(
             detail="Account is deactivated"
         )
     
+    return current_user
+
+
+def get_auth_service(
+    db: Session = Depends(get_db)
+) -> AuthService:
+    user_repo = UserRepository(db)
+    otp_repo = OTPRepository(db)
+    refresh_repo = RefreshTokenRepository(db)
+
+    jwt_service = JWTService()
+
+    return AuthService(
+        user_repository=user_repo,
+        otp_repository=otp_repo,
+        refresh_token_repository=refresh_repo,
+        jwt_service=jwt_service
+    )
+
+
+def get_email_service() -> EmailService:
+    return EmailService()
+def require_admin(
+    current_user: User = Depends(get_current_user)
+) -> User:
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+
     return current_user

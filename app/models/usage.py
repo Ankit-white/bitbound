@@ -54,10 +54,9 @@ class Usage(BaseModel):
     )
 
     usage_metadata: Mapped[Optional[dict]] = mapped_column(
-    JSON,
-    nullable=True
+        JSON,
+        nullable=True
     )
-
 
     # Relationships
     agent: Mapped["Agent"] = relationship(

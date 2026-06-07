@@ -9,6 +9,8 @@ from app.models.base import BaseModel
 if TYPE_CHECKING:
     from app.models.agents import Agent
     from app.models.payment import Payment
+    from app.models.otp import OTP
+    from app.models.refresh_token import RefreshToken
 
 
 class User(BaseModel):
@@ -48,6 +50,26 @@ class User(BaseModel):
         "Payment",
         back_populates="user",
         cascade="all, delete-orphan"
+    )
+
+    otps: Mapped[list["OTP"]] = relationship(
+        "OTP",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+
+    refresh_tokens: Mapped[list["RefreshToken"]] = relationship(
+        "RefreshToken",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+    api_keys: Mapped[list["ApiKey"]] = relationship(
+    "APIKey",
+    back_populates="agent",
+    cascade="all, delete-orphan",
+    lazy="selectin"
     )
 
     __table_args__ = (
