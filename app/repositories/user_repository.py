@@ -14,13 +14,17 @@ class UserRepository:
         name: str,
         email: str,
         password_hash: str,
-        role: str = "developer"
+        role: str = "developer",
+        is_active: bool = True,
+        email_verified: bool = False
     ) -> User:
         user = User(
             name=name,
             email=email,
             password_hash=password_hash,
-            role=role
+            role=role,
+            is_active=is_active,
+            email_verified=email_verified
         )
         
         self.db.add(user)
@@ -34,6 +38,9 @@ class UserRepository:
 
     def get_user_by_id(self, user_id: UUID) -> User | None:
         return self.db.query(User).filter(User.id == user_id).first()
+
+    def get_by_id(self, user_id: UUID) -> User | None:
+        return self.get_user_by_id(user_id)
 
     def email_exists(self, email: str) -> bool:
         return self.db.query(User).filter(User.email == email).first() is not None

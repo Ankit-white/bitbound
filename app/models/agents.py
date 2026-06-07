@@ -77,8 +77,8 @@ class Agent(BaseModel):
         lazy="selectin"
     )
 
-    api_keys: Mapped[list["ApiKey"]] = relationship(
-        "ApiKey",
+    api_keys: Mapped[list["APIKey"]] = relationship(
+        "APIKey",
         back_populates="agent",
         cascade="all, delete-orphan",
         lazy="selectin"

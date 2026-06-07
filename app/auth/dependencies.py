@@ -11,6 +11,8 @@ from app.repositories.refresh_token_repository import RefreshTokenRepository
 from app.services.auth_service import AuthService
 from app.services.email_service import EmailService
 from app.services.jwt_service import JWTService
+from app.core.config import settings
+
 
 security = HTTPBearer()
 
@@ -84,7 +86,14 @@ def get_auth_service(
     otp_repo = OTPRepository(db)
     refresh_repo = RefreshTokenRepository(db)
 
-    jwt_service = JWTService()
+    
+
+    jwt_service = JWTService(
+    secret_key=settings.JWT_SECRET_KEY,
+    algorithm=settings.JWT_ALGORITHM,
+    access_token_expire_minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES,
+    refresh_token_expire_days=settings.REFRESH_TOKEN_EXPIRE_DAYS
+    )
 
     return AuthService(
         user_repository=user_repo,
@@ -95,7 +104,19 @@ def get_auth_service(
 
 
 def get_email_service() -> EmailService:
-    return EmailService()
+    smtp_port = settings.SMTP_PORT
+    use_ssl = smtp_port == 465
+    use_tls = smtp_port != 465
+
+    return EmailService(
+        mail_username=settings.SMTP_USERNAME,
+        mail_password=settings.SMTP_PASSWORD,
+        mail_from=settings.SMTP_FROM_EMAIL,
+        mail_server=settings.SMTP_HOST,
+        mail_port=smtp_port,
+        use_ssl=use_ssl,
+        use_tls=use_tls
+    )
 def require_admin(
     current_user: User = Depends(get_current_user)
 ) -> User:
