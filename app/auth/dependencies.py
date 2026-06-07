@@ -9,7 +9,7 @@ from app.repositories.user_repository import UserRepository
 from app.repositories.otp_repository import OTPRepository
 from app.repositories.refresh_token_repository import RefreshTokenRepository
 from app.services.auth_service import AuthService
-from app.services.email_service import EmailService
+from app.services.email_service import DebugEmailService, EmailService
 from app.services.jwt_service import JWTService
 from app.core.config import settings
 
@@ -103,7 +103,10 @@ def get_auth_service(
     )
 
 
-def get_email_service() -> EmailService:
+def get_email_service() -> EmailService | DebugEmailService:
+    if settings.AUTH_DEBUG_OTP_IN_RESPONSE:
+        return DebugEmailService()
+
     smtp_port = settings.SMTP_PORT
     use_ssl = smtp_port == 465
     use_tls = smtp_port != 465

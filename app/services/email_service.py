@@ -2,6 +2,22 @@ from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from typing import Optional
 
 
+class DebugEmailService:
+    async def send_verification_otp(
+        self,
+        email: str,
+        otp_code: str
+    ) -> None:
+        return None
+
+    async def send_password_reset_otp(
+        self,
+        email: str,
+        otp_code: str
+    ) -> None:
+        return None
+
+
 class EmailService:
     def __init__(
         self,
