@@ -4,6 +4,7 @@ from uuid import UUID
 from sqlalchemy import Boolean, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.models.api_key import APIKey
 from app.models.base import BaseModel
 
 if TYPE_CHECKING:
@@ -39,6 +40,12 @@ class User(BaseModel):
         default=True
     )
 
+    email_verified: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False
+    )
+
     agents: Mapped[list["Agent"]] = relationship(
         "Agent",
         back_populates="user",
@@ -65,9 +72,9 @@ class User(BaseModel):
         cascade="all, delete-orphan",
         lazy="selectin"
     )
-    api_keys: Mapped[list["ApiKey"]] = relationship(
+    api_keys: Mapped[list["APIKey"]] = relationship(
     "APIKey",
-    back_populates="agent",
+    back_populates="user",
     cascade="all, delete-orphan",
     lazy="selectin"
     )
@@ -87,6 +94,7 @@ class User(BaseModel):
             "email": self.email,
             "role": self.role,
             "is_active": self.is_active,
+            "email_verified": self.email_verified,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

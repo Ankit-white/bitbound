@@ -10,8 +10,8 @@ class EmailService:
         mail_from: str,
         mail_server: str,
         mail_port: int,
-        use_ssl: bool = True,
-        use_tls: bool = False
+        use_ssl: bool = False,
+        use_tls: bool = True
     ):
         self.mail_from = mail_from
         self.conf = ConnectionConfig(
@@ -21,9 +21,9 @@ class EmailService:
             MAIL_SERVER=mail_server,
             MAIL_PORT=mail_port,
             MAIL_SSL_TLS=use_ssl,
-            MAIL_TLS=use_tls,
+            MAIL_STARTTLS=use_tls,
             USE_CREDENTIALS=True,
-            VALIDATE_CERTS=True
+            VALIDATE_CERTS=True,
         )
 
     async def send_email(

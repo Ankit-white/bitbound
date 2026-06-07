@@ -38,7 +38,7 @@ class APIKeyRepository:
             self.db.rollback()
             raise
 
-    def get_by_id(self, key_id: UUID) -> Optional[ApiKey]:
+    def get_by_id(self, key_id: UUID) -> Optional[APIKey]:
         return self.db.query(APIKey).filter(APIKey.id == key_id).first()
 
     def get_by_key_hash(self, key_hash: str) -> Optional[APIKey]:

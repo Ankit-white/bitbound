@@ -56,6 +56,21 @@ class OTPRepository:
             .first()
         )
 
+    def get_latest_otp(
+        self,
+        user_id: UUID,
+        otp_type: str
+    ) -> Optional[OTP]:
+        return (
+            self.db.query(OTP)
+            .filter(
+                OTP.user_id == user_id,
+                OTP.otp_type == otp_type
+            )
+            .order_by(OTP.created_at.desc())
+            .first()
+        )
+
     def update_otp(self, otp: OTP) -> OTP:
         self.db.commit()
         self.db.refresh(otp)

@@ -10,6 +10,8 @@ from app.models.base import BaseModel
 if TYPE_CHECKING:
     from app.models.agents import Agent
     from app.models.transaction import Transaction
+    from app.models.payment import Payment
+    from app.models.usage import Usage
 
 
 class Wallet(BaseModel):
@@ -46,6 +48,18 @@ class Wallet(BaseModel):
         back_populates="wallet",
         cascade="all, delete-orphan",
         lazy="selectin"
+    )
+
+    payments: Mapped[list["Payment"]] = relationship(
+        "Payment",
+        back_populates="wallet",
+        cascade="all, delete-orphan"
+    )
+
+    usages: Mapped[list["Usage"]] = relationship(
+        "Usage",
+        back_populates="wallet",
+        cascade="all, delete-orphan"
     )
 
     __table_args__ = (

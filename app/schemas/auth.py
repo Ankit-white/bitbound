@@ -2,27 +2,13 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field
 
 
 class UserSignupRequest(BaseModel):
-    name: str = Field(..., min_length=2, max_length=100, description="User's full name")
+    name: str = Field(..., description="User's full name")
     email: EmailStr = Field(..., description="Valid email address")
-    password: str = Field(..., min_length=8, max_length=128, description="Password (8-128 characters)")
-
-    @field_validator("password")
-    @classmethod
-    def validate_password_strength(cls, v: str) -> str:
-        if not any(char.isdigit() for char in v):
-            raise ValueError("Password must contain at least one digit")
-        
-        if not any(char.isupper() for char in v):
-            raise ValueError("Password must contain at least one uppercase letter")
-        
-        if not any(char.islower() for char in v):
-            raise ValueError("Password must contain at least one lowercase letter")
-        
-        return v
+    password: str = Field(..., min_length=1, description="Account password")
 
 
 class UserLoginRequest(BaseModel):

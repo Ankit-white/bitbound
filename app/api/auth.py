@@ -16,6 +16,7 @@ from app.services.auth_service import (
 )
 from app.services.email_service import EmailService
 from app.auth.dependencies import get_current_user, get_auth_service, get_email_service
+from app.core.config import settings
 from app.models.user import User
 from app.models.otp import OTPType
 
@@ -41,8 +42,13 @@ class LoginResponse(BaseModel):
 
 
 class VerifyEmailRequest(BaseModel):
-    user_id: UUID
+    user_id: Optional[UUID] = None
+    email: Optional[EmailStr] = None
     otp_code: str
+
+
+class ResendVerificationOTPRequest(BaseModel):
+    email: EmailStr
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -68,6 +74,15 @@ class MessageResponse(BaseModel):
     message: str
 
 
+class RegisterResponse(MessageResponse):
+    user_id: UUID
+    debug_otp: Optional[str] = None
+
+
+class ResendVerificationOTPResponse(MessageResponse):
+    debug_otp: Optional[str] = None
+
+
 class UserResponse(BaseModel):
     id: UUID
     name: str
@@ -82,7 +97,7 @@ class UserResponse(BaseModel):
 
 @router.post(
     "/register",
-    response_model=MessageResponse,
+    response_model=RegisterResponse,
     status_code=status.HTTP_201_CREATED
 )
 async def register(
@@ -98,10 +113,28 @@ async def register(
         )
         
         otp_code = auth_service.send_otp(user.id, OTPType.EMAIL_VERIFICATION)
-        
-        await email_service.send_verification_otp(request.email, otp_code)
-        
-        return MessageResponse(message="User registered successfully. Please check your email for verification OTP.")
+        if settings.AUTH_DEBUG_OTP_IN_RESPONSE:
+            return RegisterResponse(
+                message="User registered in debug OTP mode. Use debug_otp to verify this local account.",
+                user_id=user.id,
+                debug_otp=otp_code
+            )
+
+        try:
+            await email_service.send_verification_otp(request.email, otp_code)
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={
+                    "message": "User registered, but verification OTP email could not be sent. Check SMTP credentials and request a new OTP.",
+                    "user_id": str(user.id)
+                }
+            )
+
+        return RegisterResponse(
+            message="User registered successfully. Please check your email for verification OTP.",
+            user_id=user.id
+        )
     except AuthServiceError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -157,6 +190,46 @@ def login(
 
 
 @router.post(
+    "/resend-verification-otp",
+    response_model=ResendVerificationOTPResponse
+)
+async def resend_verification_otp(
+    request: ResendVerificationOTPRequest,
+    auth_service: AuthService = Depends(get_auth_service),
+    email_service: EmailService = Depends(get_email_service)
+):
+    try:
+        user = auth_service.get_user_by_email(request.email)
+        if not user:
+            raise UserNotFoundError("User not found")
+
+        if user.email_verified:
+            return MessageResponse(message="Email is already verified.")
+
+        otp_code = auth_service.send_otp(user.id, OTPType.EMAIL_VERIFICATION)
+        if settings.AUTH_DEBUG_OTP_IN_RESPONSE:
+            return ResendVerificationOTPResponse(
+                message="Verification OTP generated in debug OTP mode.",
+                debug_otp=otp_code
+            )
+
+        try:
+            await email_service.send_verification_otp(request.email, otp_code)
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Verification OTP email could not be sent. Check SMTP credentials and try again."
+            )
+
+        return ResendVerificationOTPResponse(message="Verification OTP sent successfully.")
+    except UserNotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+
+
+@router.post(
     "/verify-email",
     response_model=MessageResponse
 )
@@ -165,8 +238,18 @@ def verify_email(
     auth_service: AuthService = Depends(get_auth_service)
 ):
     try:
+        user_id = request.user_id
+        if not user_id and request.email:
+            user = auth_service.get_user_by_email(request.email)
+            if not user:
+                raise UserNotFoundError("User not found")
+            user_id = user.id
+
+        if not user_id:
+            raise UserNotFoundError("User ID or email is required")
+
         auth_service.verify_email(
-            user_id=request.user_id,
+            user_id=user_id,
             otp_code=request.otp_code
         )
         
