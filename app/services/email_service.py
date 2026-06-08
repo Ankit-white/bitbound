@@ -73,7 +73,11 @@ class EmailService:
                 smtp.starttls()
 
             smtp.login(self.mail_username, self.mail_password)
-            smtp.send_message(message)
+            smtp.send_message(
+                message,
+                from_addr=self.mail_from,
+                to_addrs=[recipient]
+            )
 
     async def send_verification_otp(
         self,
