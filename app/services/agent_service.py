@@ -2,6 +2,7 @@ from uuid import UUID
 
 from app.models.agents import Agent
 from app.repositories.agent_repository import AgentRepository
+from app.repositories.wallet_repository import WalletRepository
 
 
 class AgentLimitExceededError(Exception):
@@ -13,8 +14,13 @@ class AgentAlreadyExistsError(Exception):
 
 
 class AgentService:
-    def __init__(self, agent_repo: AgentRepository):
+    def __init__(
+        self,
+        agent_repo: AgentRepository,
+        wallet_repo: WalletRepository | None = None
+    ):
         self.agent_repo = agent_repo
+        self.wallet_repo = wallet_repo
 
     def create_agent(
         self,
@@ -34,11 +40,15 @@ class AgentService:
                 f"User {user_id} cannot create more than 3 agents. Current count: {agent_count}"
             )
 
-        return self.agent_repo.create_agent(
+        agent = self.agent_repo.create_agent(
             user_id=user_id,
             name=name,
             description=description
         )
+        if self.wallet_repo and not self.wallet_repo.wallet_exists(agent.id):
+            self.wallet_repo.create_wallet(agent.id)
+
+        return agent
 
     def get_user_agents(self, user_id: UUID) -> list[Agent]:
         return self.agent_repo.get_by_user(user_id)

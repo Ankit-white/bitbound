@@ -77,9 +77,10 @@ def get_payment_service(db: Session = Depends(get_db)) -> PaymentService:
     try:
         import razorpay
         from app.core.config import settings
-        razorpay_client = razorpay.Client(
-            auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
-        )
+        if settings.RAZORPAY_KEY_ID and settings.RAZORPAY_KEY_SECRET:
+            razorpay_client = razorpay.Client(
+                auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
+            )
     except (ImportError, AttributeError):
         pass
     
@@ -132,6 +133,38 @@ def get_user_payments(
     return [PaymentResponse.model_validate(p) for p in payments]
 
 
+@router.get("/wallet/{wallet_id}", response_model=List[PaymentResponse])
+def get_wallet_payments(
+    wallet_id: UUID,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=100),
+    current_user: User = Depends(get_current_user),
+    service: PaymentService = Depends(get_payment_service)
+):
+    payments = service.get_wallet_payments(wallet_id, skip, limit)
+    
+    for payment in payments:
+        if payment.user_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied to one or more payments"
+            )
+    
+    return [PaymentResponse.model_validate(p) for p in payments]
+
+
+@router.get("/pending", response_model=List[PaymentResponse])
+def get_pending_payments(
+    current_user: User = Depends(get_current_user),
+    service: PaymentService = Depends(get_payment_service)
+):
+    payments = service.get_pending_payments()
+    
+    user_payments = [p for p in payments if p.user_id == current_user.id]
+    
+    return [PaymentResponse.model_validate(p) for p in user_payments]
+
+
 @router.get("/{payment_id}", response_model=PaymentResponse)
 def get_payment(
     payment_id: UUID,
@@ -153,26 +186,6 @@ def get_payment(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e)
         )
-
-
-@router.get("/wallet/{wallet_id}", response_model=List[PaymentResponse])
-def get_wallet_payments(
-    wallet_id: UUID,
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=100),
-    current_user: User = Depends(get_current_user),
-    service: PaymentService = Depends(get_payment_service)
-):
-    payments = service.get_wallet_payments(wallet_id, skip, limit)
-    
-    for payment in payments:
-        if payment.user_id != current_user.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied to one or more payments"
-            )
-    
-    return [PaymentResponse.model_validate(p) for p in payments]
 
 
 @router.post("/webhook/razorpay", status_code=status.HTTP_200_OK)
@@ -208,13 +221,3 @@ async def razorpay_webhook(
         )
 
 
-@router.get("/pending", response_model=List[PaymentResponse])
-def get_pending_payments(
-    current_user: User = Depends(get_current_user),
-    service: PaymentService = Depends(get_payment_service)
-):
-    payments = service.get_pending_payments()
-    
-    user_payments = [p for p in payments if p.user_id == current_user.id]
-    
-    return [PaymentResponse.model_validate(p) for p in user_payments]

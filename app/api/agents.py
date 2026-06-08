@@ -7,6 +7,7 @@ from app.auth.dependencies import get_current_user
 from app.database import get_db
 from app.models.user import User
 from app.repositories.agent_repository import AgentRepository
+from app.repositories.wallet_repository import WalletRepository
 from app.schemas.agent import AgentCreateRequest, AgentListResponse, AgentResponse
 from app.services.agent_service import (
     AgentService,
@@ -24,7 +25,8 @@ def create_agent(
     db: Session = Depends(get_db),
 ):
     agent_repo = AgentRepository(db)
-    agent_service = AgentService(agent_repo)
+    wallet_repo = WalletRepository(db)
+    agent_service = AgentService(agent_repo, wallet_repo)
 
     try:
         agent = agent_service.create_agent(

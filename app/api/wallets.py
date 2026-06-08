@@ -11,6 +11,7 @@ from app.auth.dependencies import get_current_user
 from app.services.wallet_service import (
     WalletService,
     WalletNotFoundError,
+    WalletAccessDeniedError,
     InsufficientBalanceError,
     InvalidAmountError,
     WalletAlreadyExistsError
@@ -73,7 +74,7 @@ def get_wallet_by_agent(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e)
         )
-    except PermissionError as e:
+    except WalletAccessDeniedError as e:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=str(e)
@@ -94,7 +95,7 @@ def get_wallet_by_id(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e)
         )
-    except PermissionError as e:
+    except WalletAccessDeniedError as e:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=str(e)
@@ -121,7 +122,7 @@ def credit_wallet(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e)
         )
-    except PermissionError as e:
+    except WalletAccessDeniedError as e:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=str(e)
@@ -153,7 +154,7 @@ def debit_wallet(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e)
         )
-    except PermissionError as e:
+    except WalletAccessDeniedError as e:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=str(e)
@@ -186,7 +187,7 @@ def get_wallet_transactions(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e)
         )
-    except PermissionError as e:
+    except WalletAccessDeniedError as e:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=str(e)
