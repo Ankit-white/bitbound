@@ -23,8 +23,14 @@ class WalletRepository:
     def get_wallet_by_id(self, wallet_id: UUID) -> Wallet | None:
         return self.db.query(Wallet).filter(Wallet.id == wallet_id).first()
 
+    def get_by_id(self, wallet_id: UUID) -> Wallet | None:
+        return self.get_wallet_by_id(wallet_id)
+
     def get_wallet_by_agent(self, agent_id: UUID) -> Wallet | None:
         return self.db.query(Wallet).filter(Wallet.agent_id == agent_id).first()
+
+    def get_by_agent(self, agent_id: UUID) -> Wallet | None:
+        return self.get_wallet_by_agent(agent_id)
 
     def wallet_exists(self, agent_id: UUID) -> bool:
         return self.get_wallet_by_agent(agent_id) is not None
