@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     SMTP_USERNAME: Optional[str] = None
     SMTP_PASSWORD: Optional[str] = None
     SMTP_FROM_EMAIL: Optional[str] = None
+    SMTP_USE_SSL: bool = False
+    SMTP_USE_TLS: bool = True
     AUTH_DEBUG_OTP_IN_RESPONSE: bool = False
 
     RAZORPAY_KEY_ID: Optional[str] = None

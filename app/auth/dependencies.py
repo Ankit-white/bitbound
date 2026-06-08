@@ -9,7 +9,7 @@ from app.repositories.user_repository import UserRepository
 from app.repositories.otp_repository import OTPRepository
 from app.repositories.refresh_token_repository import RefreshTokenRepository
 from app.services.auth_service import AuthService
-from app.services.email_service import EmailService
+from app.services.email_service import DebugEmailService, EmailService
 from app.services.jwt_service import JWTService
 from app.core.config import settings
 
@@ -103,19 +103,34 @@ def get_auth_service(
     )
 
 
-def get_email_service() -> EmailService:
-    smtp_port = settings.SMTP_PORT
-    use_ssl = smtp_port == 465
-    use_tls = smtp_port != 465
+def get_email_service() -> EmailService | DebugEmailService:
+    if settings.AUTH_DEBUG_OTP_IN_RESPONSE:
+        return DebugEmailService()
+
+    missing_settings = [
+        name for name, value in {
+            "SMTP_HOST": settings.SMTP_HOST,
+            "SMTP_PORT": settings.SMTP_PORT,
+            "SMTP_USERNAME": settings.SMTP_USERNAME,
+            "SMTP_PASSWORD": settings.SMTP_PASSWORD,
+            "SMTP_FROM_EMAIL": settings.SMTP_FROM_EMAIL,
+        }.items()
+        if value in (None, "")
+    ]
+    if missing_settings:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"SMTP is not configured. Missing: {', '.join(missing_settings)}"
+        )
 
     return EmailService(
         mail_username=settings.SMTP_USERNAME,
         mail_password=settings.SMTP_PASSWORD,
         mail_from=settings.SMTP_FROM_EMAIL,
         mail_server=settings.SMTP_HOST,
-        mail_port=smtp_port,
-        use_ssl=use_ssl,
-        use_tls=use_tls
+        mail_port=settings.SMTP_PORT,
+        use_ssl=settings.SMTP_USE_SSL,
+        use_tls=settings.SMTP_USE_TLS
     )
 def require_admin(
     current_user: User = Depends(get_current_user)

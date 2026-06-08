@@ -123,11 +123,11 @@ async def register(
         try:
             await email_service.send_verification_otp(request.email, otp_code)
         except Exception:
+            auth_service.delete_user(user.id)
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail={
-                    "message": "User registered, but verification OTP email could not be sent. Check SMTP credentials and request a new OTP.",
-                    "user_id": str(user.id)
+                    "message": "Verification OTP email could not be sent. Check SMTP credentials and try registering again."
                 }
             )
 
@@ -309,6 +309,10 @@ def reset_password(
 
 @router.post(
     "/refresh-token",
+    response_model=RefreshTokenResponse
+)
+@router.post(
+    "/refresh",
     response_model=RefreshTokenResponse
 )
 def refresh_token(

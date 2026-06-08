@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from typing import Dict, Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from jose import jwt
 from jose.exceptions import JWTError
@@ -30,6 +30,7 @@ class JWTService:
         payload = {
             "sub": str(user_id),
             "type": "access",
+            "jti": str(uuid4()),
             "iat": now,
             "exp": expire
         }
@@ -41,6 +42,7 @@ class JWTService:
         payload = {
             "sub": str(user_id),
             "type": "refresh",
+            "jti": str(uuid4()),
             "iat": now,
             "exp": expire
         }
