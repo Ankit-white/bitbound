@@ -311,6 +311,10 @@ def reset_password(
     "/refresh-token",
     response_model=RefreshTokenResponse
 )
+@router.post(
+    "/refresh",
+    response_model=RefreshTokenResponse
+)
 def refresh_token(
     request: RefreshTokenRequest,
     auth_service: AuthService = Depends(get_auth_service)
